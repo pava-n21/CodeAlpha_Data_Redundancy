@@ -119,7 +119,39 @@ def submit():
     )
 
 
-def save_validation_log(name, email, phone, data_hash, result, reason):
+@app.route("/records")
+def view_records():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT name, email, phone, status, created_at
+        FROM records
+        ORDER BY id DESC
+        """
+    )
+
+    records = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "index.html",
+        records=records
+    )
+
+
+def save_validation_log(
+    name,
+    email,
+    phone,
+    data_hash,
+    result,
+    reason
+):
 
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -130,7 +162,14 @@ def save_validation_log(name, email, phone, data_hash, result, reason):
         (name, email, phone, data_hash, result, reason)
         VALUES (%s, %s, %s, %s, %s, %s)
         """,
-        (name, email, phone, data_hash, result, reason)
+        (
+            name,
+            email,
+            phone,
+            data_hash,
+            result,
+            reason
+        )
     )
 
     connection.commit()

@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Data Redundancy Removal System</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -16,28 +18,97 @@
 
         <p>Enter your details below</p>
 
+        <!-- Data Submission Form -->
         <form method="POST" action="/submit">
 
             <label for="name">Name</label>
-            <input type="text" id="name" name="name" required>
+            <input
+                type="text"
+                id="name"
+                name="name"
+                required
+            >
 
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                required
+            >
 
             <label for="phone">Phone</label>
-            <input type="text" id="phone" name="phone" required>
+            <input
+                type="text"
+                id="phone"
+                name="phone"
+                required
+            >
 
-            <button type="submit">Submit Data</button>
+            <button type="submit">
+                Submit Data
+            </button>
 
         </form>
 
+
+        <!-- Success / Error Message -->
         {% if message %}
+
             <div class="message">
                 {{ message }}
             </div>
+
+        {% endif %}
+
+
+        <!-- View Existing Records Button -->
+        <a href="/records" class="records-button">
+            View Existing Records
+        </a>
+
+
+        <!-- Existing Records -->
+        {% if records %}
+
+            <div class="records-section">
+
+                <h2>Existing Records</h2>
+
+                <table>
+
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                    </tr>
+
+                    {% for record in records %}
+
+                    <tr>
+                        <td>{{ record.name }}</td>
+                        <td>{{ record.email }}</td>
+                        <td>{{ record.phone }}</td>
+                        <td>{{ record.status }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </table>
+
+                <br>
+
+                <a href="/" class="back-button">
+                    Back to Home
+                </a>
+
+            </div>
+
         {% endif %}
 
     </div>
 
 </body>
+
 </html>
