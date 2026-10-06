@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Stored Records</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="card">
+
+            <h1>Stored Unique Records</h1>
+
+            <p class="subtitle">
+                Records currently stored in the AWS RDS database.
+            </p>
+
+            {% if records %}
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for record in records %}
+
+                        <tr>
+                            <td>{{ record.id }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>{{ record.email }}</td>
+                            <td>{{ record.phone }}</td>
+                            <td>{{ record.status }}</td>
+                            <td>{{ record.created_at }}</td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <p class="empty">
+                No unique records have been added yet.
+            </p>
+
+            {% endif %}
+
+            <br>
+
+            <a href="/">
+                ← Add New Record
+            </a>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

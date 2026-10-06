@@ -1,29 +1,18 @@
 from flask import Flask, render_template, request
+
+from validator import validate_record
+
+from duplicate_detector import (
+    create_record_hash,
+    check_duplicate,
+    insert_record,
+    log_validation
+)
+
 from database import get_db_connection
-import hashlib
-import re
+
 
 app = Flask(__name__)
-
-
-def generate_hash(name, email, phone):
-    data = f"{name.strip().lower()}|{email.strip().lower()}|{phone.strip()}"
-    return hashlib.sha256(data.encode()).hexdigest()
-
-
-def validate_data(name, email, phone):
-    if not name.strip():
-        return False, "Name cannot be empty."
-
-    email_pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
-
-    if not re.match(email_pattern, email):
-        return False, "Invalid email address."
-
-    if not phone.isdigit() or len(phone) < 10:
-        return False, "Invalid phone number."
-
-    return True, "Valid data."
 
 
 @app.route("/")
@@ -35,18 +24,23 @@ def home():
 def submit():
 
     name = request.form.get("name", "").strip()
-    email = request.form.get("email", "").strip().lower()
+    email = request.form.get("email", "").strip()
     phone = request.form.get("phone", "").strip()
 
     # STEP 1: Validate input
-    valid, reason = validate_data(name, email, phone)
+    valid, reason = validate_record(
+        name,
+        email,
+        phone
+    )
 
     if not valid:
-        save_validation_log(
+
+        log_validation(
             name,
             email,
             phone,
-            "",
+            None,
             "INVALID",
             reason
         )
@@ -56,26 +50,17 @@ def submit():
             message=f"❌ {reason}"
         )
 
-    # STEP 2: Generate SHA-256 hash
-    data_hash = generate_hash(name, email, phone)
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    # STEP 3: Check whether this data already exists
-    cursor.execute(
-        "SELECT id FROM records WHERE data_hash = %s",
-        (data_hash,)
+    # STEP 2: Generate SHA-256 fingerprint
+    data_hash = create_record_hash(
+        name,
+        email,
+        phone
     )
 
-    existing_record = cursor.fetchone()
+    # STEP 3: Check for duplicate
+    if check_duplicate(data_hash):
 
-    if existing_record:
-
-        cursor.close()
-        connection.close()
-
-        save_validation_log(
+        log_validation(
             name,
             email,
             phone,
@@ -89,22 +74,16 @@ def submit():
             message="❌ Duplicate data detected. Record was not added."
         )
 
-    # STEP 4: Store unique data
-    cursor.execute(
-        """
-        INSERT INTO records
-        (name, email, phone, data_hash, status)
-        VALUES (%s, %s, %s, %s, %s)
-        """,
-        (name, email, phone, data_hash, "UNIQUE")
+    # STEP 4: Store unique record
+    insert_record(
+        name,
+        email,
+        phone,
+        data_hash
     )
 
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-    save_validation_log(
+    # STEP 5: Log successful insertion
+    log_validation(
         name,
         email,
         phone,
@@ -123,11 +102,20 @@ def submit():
 def view_records():
 
     connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
 
     cursor.execute(
         """
-        SELECT name, email, phone, status, created_at
+        SELECT
+            id,
+            name,
+            email,
+            phone,
+            status,
+            created_at
         FROM records
         ORDER BY id DESC
         """
@@ -139,44 +127,14 @@ def view_records():
     connection.close()
 
     return render_template(
-        "index.html",
+        "records.html",
         records=records
     )
 
 
-def save_validation_log(
-    name,
-    email,
-    phone,
-    data_hash,
-    result,
-    reason
-):
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO validation_logs
-        (name, email, phone, data_hash, result, reason)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        """,
-        (
-            name,
-            email,
-            phone,
-            data_hash,
-            result,
-            reason
-        )
-    )
-
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )

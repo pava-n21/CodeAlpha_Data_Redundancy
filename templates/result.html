@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Validation Result</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="card result-card">
+
+            {% if success %}
+
+                <h1>✅ Record Added</h1>
+
+                <p class="success">
+                    {{ message }}
+                </p>
+
+            {% else %}
+
+                <h1>❌ Record Not Added</h1>
+
+                <p class="error">
+                    {{ message }}
+                </p>
+
+            {% endif %}
+
+            <div class="result-links">
+
+                <a href="/">
+                    Add Another Record
+                </a>
+
+                <a href="/records">
+                    View Stored Records
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
